@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Main Page</title>
+</head>
+<body>
+    <h2>환영합니다, {{ request.user.username }} / {{ request.user.last_name }} {{ request.user.first_name }} 님!</h2>
+    <p>이곳은 로그인 후 접근 가능한 메인 페이지입니다.</p>
+    <a href="{% url 'account_logout' %}">로그아웃</a>
+</body>
+</html>
