@@ -14,11 +14,19 @@ from pathlib import Path
 
 import environ
 
-env = environ.Env()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# 1. 경로 설정 (settings/base.py 기준이므로 한 단계 더 올라가야 루트 폴더임)
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+
+current_env_mode = os.getenv('DJANGO_SETTINGS_MODULE').split('.')[-1]  # local or prod
+
+env = environ.Env()
+# 공통 .env
+env.read_env(os.path.join(BASE_DIR, '.env'))
+
+# 환경별 env (.env.local or .env.prod)
+specific_env = os.path.join(BASE_DIR, f'.env.{current_env_mode}')
+if os.path.exists(specific_env):
+    env.read_env(specific_env, overwrite=True)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
