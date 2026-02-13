@@ -92,6 +92,9 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# 소셜 로그인 어댑터
+SOCIALACCOUNT_ADAPTER = 'core.adapters.MySocialAccountAdapter'
+
 # 유저 및 로그인
 AUTH_USER_MODEL = 'core.User'
 
