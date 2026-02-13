@@ -133,23 +133,31 @@ ACCOUNT_LOGOUT_ON_GET = True
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    # 내가 수정한 DB
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'HOST': env('DATABASE_HOST'),  # 또는 '127.0.0.1'
-        'PORT': env('DATABASE_PORT'),  # MySQL 기본 포트
-        'USER': env('DATABASE_USER'),  # MySQL 유저네임 (보통 root)
-        'PASSWORD': env('DATABASE_PASSWORD'),  # MySQL 비밀번호
-        'NAME': env('DATABASE_NAME'),  # 생성한 데이터베이스 이름
-        'CONN_MAX_AGE': 600,  # 10분 동안 커넥션 유지 (성능 향상)
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',  # 이모지 저장을 위해 권장
-        },
+if current_env_mode =='local':
+    # [로컬] SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else :
+    # [배포] MySQL
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'HOST': env('DATABASE_HOST'),  # 또는 '127.0.0.1'
+            'PORT': env('DATABASE_PORT'),  # MySQL 기본 포트
+            'USER': env('DATABASE_USER'),  # MySQL 유저네임 (보통 root)
+            'PASSWORD': env('DATABASE_PASSWORD'),  # MySQL 비밀번호
+            'NAME': env('DATABASE_NAME'),  # 생성한 데이터베이스 이름
+            'CONN_MAX_AGE': 600,  # 10분 동안 커넥션 유지 (성능 향상)
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'charset': 'utf8mb4',  # 이모지 저장을 위해 권장
+            },
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
