@@ -1,9 +1,10 @@
 # core/urls.py
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
+from django.urls import path
+from django.views.generic import RedirectView
+
 from . import views
 
 urlpatterns = [
-    path('accounts/', include('allauth.urls')),  # allauth 라우트 추가
-    path('', views.main, name='main'),
+    path('', RedirectView.as_view(pattern_name='main', permanent=False)),
+    path('main/', views.main, name='main'),
 ]

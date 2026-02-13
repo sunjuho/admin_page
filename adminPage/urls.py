@@ -16,9 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.views.generic import RedirectView
 
 urlpatterns = [
+    # 어드민 로그인 주소 대신 내 로그인 페이지로 리다이렉트
+    # path('admin/login/', login_redirect),
+    path('admin/login/', RedirectView.as_view(url='/accounts/login/', query_string=True)),
     path('admin/', admin.site.urls),
-    path('', include('core.urls')), # core 앱의 urls 연결
+
+    # 소셜 로그인 관련 (allauth)
+    path('accounts/', include('allauth.urls')),
+
+    # 앱의 urls 연결
+    path('', include('core.urls')),
 
 ]

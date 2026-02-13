@@ -17,7 +17,7 @@
         <h2>서비스 로그인</h2>
         <p>구글 계정으로 간편하게 시작하세요.</p>
         <br>
-        <a href="{% provider_login_url 'google' %}" class="google-btn">
+        <a href="{% provider_login_url 'google' next=request.GET.next %}" class="google-btn">
             Google 계정으로 로그인
         </a>
     </div>
