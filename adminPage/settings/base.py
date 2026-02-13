@@ -92,6 +92,9 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# 유저 및 로그인
+AUTH_USER_MODEL = 'core.User'
+
 # [구글 로그인 및 계정 설정]
 
 # 1. 로그인 방식 설정 (경고 해결: 구버전 명칭 대신 최신 명칭 사용)
