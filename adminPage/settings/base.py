@@ -93,7 +93,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 # 소셜 로그인 어댑터
-SOCIALACCOUNT_ADAPTER = 'core.adapters.MySocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'core.services.adapters.MySocialAccountAdapter'
 
 # 유저 및 로그인
 AUTH_USER_MODEL = 'core.User'

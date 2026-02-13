@@ -7,7 +7,7 @@ from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib import messages
 from django.shortcuts import redirect
 
-from .models import AllowedEmail
+from core.models import AllowedEmail
 
 
 class MySocialAccountAdapter(DefaultSocialAccountAdapter):
