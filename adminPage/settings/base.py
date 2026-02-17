@@ -203,6 +203,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+# 실제 파일들이 들어있는 물리적인 폴더 위치
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # 배포 시 collectstatic이 모이는 곳
 
 MEDIA_URL = 'media/'

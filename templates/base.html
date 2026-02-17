@@ -1,0 +1,44 @@
+<!doctype html>
+{% load static %}
+<html lang="ko">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <meta name="supported-color-schemes" content="light dark"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/styles/overlayscrollbars.min.css"/>
+    <link rel="stylesheet" href="{% static 'css/adminlte.css' %}"/>
+        {% block main_css %}
+        {% endblock %}
+</head>
+<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary">
+<div class="app-wrapper">
+    {% include 'header.html' %}
+    {% include 'sidebar.html' %}
+    <main class="app-main">
+        {% block main_html %}
+        {% endblock %}
+    </main>
+    {% include 'footer.html' %}
+</div>
+<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"></script>
+<script src="{% static 'js/adminlte.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sidebarWrapper = document.querySelector('.sidebar-wrapper');
+        if (sidebarWrapper && OverlayScrollbarsGlobal?.OverlayScrollbars !== undefined) {
+            OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+                scrollbars: {theme: 'os-theme-light', autoHide: 'leave', clickScroll: true},
+            });
+        }
+    });
+</script>
+
+{% block main_js %}
+{% endblock %}
+</body>
+</html>
