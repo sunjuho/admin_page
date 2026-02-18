@@ -1,44 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 {% load static %}
 <html lang="ko">
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>{% block title %}Dashboard{% endblock %}</title>
-    <meta name="supported-color-schemes" content="light dark"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"/>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/styles/overlayscrollbars.min.css"/>
-    <link rel="stylesheet" href="{% static 'css/adminlte.css' %}"/>
-        {% block main_css %}
-        {% endblock %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AdminLTE 3 | Dashboard{% endblock %}</title>
+
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Ionicons -->
+    <link rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <!-- bootstrap-icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <!-- Theme style -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <!-- OPTIONAL SCRIPTS -->
+    {% block extra_css %}
+    {% endblock %}
 </head>
-<body class="layout-fixed sidebar-expand-lg sidebar-open bg-body-tertiary">
-<div class="app-wrapper">
+<body class="hold-transition sidebar-mini layout-fixed">
+<div class="wrapper">
+
+    <!-- Preloader -->
+    <div class="preloader flex-column justify-content-center align-items-center">
+        <img class="animation__shake" src="{% static 'dist/img/Logo.png' %}" alt="AdminLTELogo" height="60" width="60">
+    </div>
+
     {% include 'header.html' %}
     {% include 'sidebar.html' %}
-    <main class="app-main">
+
+    <!-- Content Wrapper. Contains page content -->
+    <div class="content-wrapper">
         {% block main_html %}
         {% endblock %}
-    </main>
-    {% include 'footer.html' %}
-</div>
-<script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.11.0/browser/overlayscrollbars.browser.es6.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.min.js"></script>
-<script src="{% static 'js/adminlte.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const sidebarWrapper = document.querySelector('.sidebar-wrapper');
-        if (sidebarWrapper && OverlayScrollbarsGlobal?.OverlayScrollbars !== undefined) {
-            OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-                scrollbars: {theme: 'os-theme-light', autoHide: 'leave', clickScroll: true},
-            });
-        }
-    });
-</script>
 
-{% block main_js %}
+    </div>
+    <!-- /.content-wrapper -->
+    {% include 'footer.html' %}
+
+    <!-- Control Sidebar -->
+    <aside class="control-sidebar control-sidebar-dark">
+        <!-- Control sidebar content goes here -->
+    </aside>
+    <!-- /.control-sidebar -->
+</div>
+<!-- ./wrapper -->
+
+<!-- jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<!-- Bootstrap 4 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.6.1/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<!-- OPTIONAL SCRIPTS -->
+{% block extra_js %}
 {% endblock %}
+
 </body>
 </html>
