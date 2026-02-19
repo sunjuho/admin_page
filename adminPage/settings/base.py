@@ -173,6 +173,7 @@ Q_CLUSTER = {
     'workers': 4,
     'recycle': 500,
     'timeout': 300,  # 작업 하나에 허용할 최대 시간(초)
+    'retry': 360,    # 반드시 timeout보다 크게 설정 (예: 300 + 60)
     'compress': True,
     'save_limit': 250,
     'queue_limit': 500,
