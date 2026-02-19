@@ -53,7 +53,8 @@ INSTALLED_APPS = [
     # 배치 관련
     'django_q',
     # 만든 앱
-    'core'
+    'core',
+    'investments',
 ]
 
 MIDDLEWARE = [
