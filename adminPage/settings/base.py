@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
 
+    # 배치 관련
+    'django_q',
     # 만든 앱
     'core'
 ]
@@ -164,6 +166,19 @@ else :
             },
         }
     }
+
+# Q2 배치 관련 클러스터
+Q_CLUSTER = {
+    'name': 'my_project_cluster',
+    'workers': 4,
+    'recycle': 500,
+    'timeout': 300,  # 작업 하나에 허용할 최대 시간(초)
+    'compress': True,
+    'save_limit': 250,
+    'queue_limit': 500,
+    'label': 'Django Q',
+    'orm': 'default',  # 별도의 Redis 없이 장고에서 사용하는 DB를 브로커로 사용
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
