@@ -1,20 +1,27 @@
 from django.db import models
+from django.conf import settings  # 유저 모델 참조용
 from django.utils import timezone
 from datetime import timedelta
 
 # 한투 계좌
 class Account(models.Model):
+    # 소유자 필드 추가 (로그인한 유저)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='accounts',
+        verbose_name="소유자"
+    )
     name = models.CharField(max_length=50, help_text="계좌 별명 (예: 메인 투자계좌)")
     account_number = models.CharField(max_length=20, unique=True, verbose_name="계좌번호")
 
-    # API 접속 정보 (실전 계좌용)
     app_key = models.CharField(max_length=200)
     secret_key = models.CharField(max_length=200)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} ({self.account_number})"
+        return f"{self.owner.username}의 {self.name} ({self.account_number})"
 
     class Meta:
         verbose_name = "한투 계좌"
