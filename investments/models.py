@@ -13,7 +13,8 @@ class Account(models.Model):
         verbose_name="소유자"
     )
     name = models.CharField(max_length=50, help_text="계좌 별명 (예: 메인 투자계좌)")
-    account_number = models.CharField(max_length=20, unique=True, verbose_name="계좌번호")
+    account_number = models.CharField(max_length=20, unique=True, verbose_name="계좌번호", help_text="'-'없이 10자리")
+    hts_id = models.CharField(max_length=20)
 
     app_key = models.CharField(max_length=200)
     secret_key = models.CharField(max_length=200)
@@ -39,7 +40,7 @@ class Token(models.Model):
     expired_at = models.DateTimeField(verbose_name="공식 만료 일시")
 
     # 관리용 필드
-    is_valid = models.BooleanField(default=True, verbose_name="유효 여부")
+    is_use = models.BooleanField(default=True, verbose_name="사용 여부")
 
     def __str__(self):
         return f"Token for {self.account.name}"
@@ -50,7 +51,7 @@ class Token(models.Model):
         23시간이 지났는지 체크하는 로직
         True면 새로 발급받아야 함
         """
-        if not self.is_valid:
+        if not self.is_use:
             return True
 
         # 발급된 지 23시간이 지났는지 확인

@@ -30,4 +30,4 @@ class AccountAdmin(admin.ModelAdmin):
 
 @admin.register(Token)
 class TokenAdmin(admin.ModelAdmin):
-    list_display = ('account', 'issued_at', 'expired_at', 'is_valid')
+    list_display = ('account', 'issued_at', 'expired_at', 'is_use')
