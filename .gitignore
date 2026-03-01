@@ -10,6 +10,7 @@ __pycache__/
 venv/
 env/
 .venv/
+admin_venv/
 
 # 3. 데이터베이스
 *.sqlite3
