@@ -1,3 +1,4 @@
+{% load nav_tags %}
 {% load static %}
 <!-- Main Sidebar Container -->
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -24,21 +25,32 @@
             <ul class="nav nav-pills nav-sidebar flex-column nav-child-indent" data-widget="treeview" role="menu" data-accordion="false">
                 <!-- Add icons to the links using the .nav-icon class
                      with font-awesome or any other icon font library -->
-                <li class="nav-item">
-                    <a href="{% url 'main' %}" class="nav-link active">
+                <li class="nav-item {% menu_open 'main' %}">
+                    <a href="{% url 'main' %}" class="nav-link {% active_nav 'main' %}">
                         <i class="nav-icon fas fa-solid fa-tachometer-alt"></i>
                         <p>
                             대시보드
                         </p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{% url 'main' %}" class="nav-link">
+                <li class="nav-item {% menu_open 'investments' %}">
+                    <a href="#" class="nav-link {% active_nav 'investments' %}">
                         <i class="nav-icon fas fa-solid fa-chart-line"></i>
                         <p>
                             투자관리
+                            <i class="right fas fa-angle-left"></i>
                         </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item {% active_nav 'account' %}">
+                            <a href="{% url 'investments:account_list' %}" class="nav-link {% active_nav 'account' %}">
+                                <i class="nav-icon fas fa-wallet"></i>
+                                <p>
+                                    계좌관리
+                                </p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
 
 
