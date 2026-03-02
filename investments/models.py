@@ -1,10 +1,19 @@
-from django.db import models
-from django.conf import settings  # 유저 모델 참조용
-from django.utils import timezone
 from datetime import timedelta
+
+from django.conf import settings  # 유저 모델 참조용
+from django.core.validators import RegexValidator
+from django.db import models
+from django.utils import timezone
+
 
 # 한투 계좌
 class Account(models.Model):
+    # 숫자 10자리 정규식 설정
+    numeric_filter = RegexValidator(
+        regex=r'^\d{10}$',
+        message='계좌번호는 숫자 10자리여야 합니다.'
+    )
+
     # 소유자 필드 추가 (로그인한 유저)
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -12,8 +21,13 @@ class Account(models.Model):
         related_name='accounts',
         verbose_name="소유자"
     )
-    name = models.CharField(max_length=50, help_text="계좌 별명 (예: 메인 투자계좌)")
-    account_number = models.CharField(max_length=20, unique=True, verbose_name="계좌번호", help_text="'-'없이 10자리")
+    name = models.CharField(max_length=50,
+                            help_text="계좌 별명 (예: 메인 투자계좌)")
+    account_number = models.CharField(max_length=10,
+                                      unique=True,
+                                      validators=[numeric_filter],
+                                      verbose_name="계좌번호",
+                                      help_text="'-'없이 10자리")
     hts_id = models.CharField(max_length=20)
 
     app_key = models.CharField(max_length=200)

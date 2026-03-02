@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    계좌목록
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block main_html %}
+    <h2>내 계좌 목록</h2>
+    <ul>
+        {% for account in accounts %}
+            <li id="account-item-{{ account.pk }}">
+                {{ account.account_number }} ({{ account.name }})
+                <a href="{% url 'investments:account_update' account.pk %}" class="btn btn-sm btn-info">수정</a>
+                <a href="{% url 'investments:account_delete' account.pk %}" class="btn btn-sm btn-danger">페이지[삭제]</a>
+                <button onclick="deleteAccount('{{ account.pk }}')" class="btn btn-sm btn-danger">ajax[삭제]</button>
+            </li>
+        {% empty %}
+            <li>등록된 계좌가 없습니다.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'investments:account_create' %}">새 계좌 등록하기</a>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        function deleteAccount(pk) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+
+            // 장고의 CSRF 토큰 가져오기 (자바 스프링 시큐리티 CSRF와 동일한 원리)
+            const csrftoken = '{{ csrf_token }}';
+
+            fetch(`/investments/account/${pk}/delete/ajax/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // 성공 시 페이지 새로고침 없이 해당 DOM 요소만 제거
+                        const element = document.getElementById(`account-item-${pk}`);
+                        element.remove();
+                        alert(data.message);
+                    } else {
+                        alert('삭제 실패');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block main_html %}
+    <h2>계좌 삭제 확인</h2>
+    <p>"{{ account.account_number }} ({{ account.name }})" 계좌를 정말로 삭제하시겠습니까?</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" style="background-color: red; color: white;">확인, 삭제합니다</button>
+        <a href="{% url 'investments:account_list' %}">취소</a>
+    </form>
+
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}

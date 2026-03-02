@@ -29,5 +29,6 @@ urlpatterns = [
 
     # 앱의 urls 연결
     path('', include('core.urls')),
+    path('investments/', include('investments.urls')),
 
 ]

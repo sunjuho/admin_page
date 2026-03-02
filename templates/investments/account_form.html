@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block main_html %}
+    <form method="post">
+        {% csrf_token %} {{ form.as_p }}  <button type="submit">계좌 등록</button>
+    </form>
+{% endblock %}
+
+{% block extra_js %}
+{% endblock %}
