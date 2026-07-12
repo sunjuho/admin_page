@@ -17,5 +17,5 @@ class AllowedEmail(models.Model):
         return self.email
 
     class Meta:
-        verbose_name = "허용된 이메일"
-        verbose_name_plural = "허용된 이메일"
+        verbose_name = "가입 허용 이메일"
+        verbose_name_plural = "가입 허용 이메일"

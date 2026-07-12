@@ -2,6 +2,11 @@
 {% load static %}
 
 {% block title %}
+    {% if object %}
+        계좌 정보 수정
+    {% else %}
+        새 계좌 등록
+    {% endif %}
 {% endblock %}
 
 {% block extra_css %}
@@ -9,7 +14,16 @@
 
 {% block main_html %}
     <form method="post">
-        {% csrf_token %} {{ form.as_p }}  <button type="submit">계좌 등록</button>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">
+            {% if object %}
+                저장하기
+            {% else %}
+                등록하기
+            {% endif %}
+        </button>
+        <a href="{% url 'investments:account_list' %}">취소</a>
     </form>
 {% endblock %}
 
