@@ -1,19 +1,13 @@
 from django.contrib import admin
-from .models import Account, Token
-
-# Token 을 어떻게 보여줄지 정의
-class TokenInline(admin.StackedInline):
-    model = Token
-    extra = 0 # 추가로 보여줄 빈 입력 칸의 개수
-    readonly_fields = ('access_token', 'issued_at', 'expired_at')
+from .models import Account
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'account_number', 'get_token_status','created_at')
+    list_display = ('name', 'owner', 'account_number', 'get_token_status', 'token_expired_at', 'created_at')
     # 어드민 폼에서 owner 필드 제외
     exclude = ('owner',)
-    # Account 페이지 하단에 TokenInline 노출
-    inlines = [TokenInline]
+    # 토큰 값은 API 발급 결과로만 채워지므로 읽기 전용 (사용 여부만 수정 가능)
+    readonly_fields = ('access_token', 'token_issued_at', 'token_expired_at')
 
     def save_model(self, request, obj, form, change):
         # 새로 생성되는 경우(change=False) 소유주를 현재 로그인 유저로 자동 할당
@@ -22,12 +16,7 @@ class AccountAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
     def get_token_status(self, obj):
-        try:
-            return "갱신 필요" if obj.token.is_expired_custom else "유효함"
-        except Token.DoesNotExist:
+        if not obj.access_token:
             return "토큰 없음"
+        return "갱신 필요" if obj.is_token_expired else "유효함"
     get_token_status.short_description = "토큰 상태"
-
-@admin.register(Token)
-class TokenAdmin(admin.ModelAdmin):
-    list_display = ('account', 'issued_at', 'expired_at', 'is_use')

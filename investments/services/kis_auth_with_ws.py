@@ -34,7 +34,7 @@ from base64 import b64decode
 from django.conf import settings  # 유저 모델 참조용
 from django.utils import timezone
 
-from investments.models import Account, Token
+from investments.models import Account
 
 
 class KisAuth:
@@ -60,24 +60,17 @@ class KisAuth:
         naive_expired = datetime.strptime(my_expired, "%Y-%m-%d %H:%M:%S")
         aware_expired = timezone.make_aware(naive_expired)
 
-        Token.objects.update_or_create(
-            account=self.account,  # 조회 조건 (어떤 계좌의 토큰을 찾을 것인가)
-            defaults={  # 업데이트할 내용 (찾았으면 수정, 없으면 생성 시 사용할 값)
-                "access_token": my_token,
-                "issued_at": timezone.now(),
-                "expired_at": aware_expired,
-            },
-        )
-        self.account.refresh_from_db()  # 토큰 생성 후 DB에서 다시 동기화
+        self.account.access_token = my_token
+        self.account.token_issued_at = timezone.now()
+        self.account.token_expired_at = aware_expired
+        self.account.token_is_use = True
+        self.account.save(update_fields=["access_token", "token_issued_at", "token_expired_at", "token_is_use"])
 
     # 토큰 확인 (토큰값, 토큰 유효시간_1일, 6시간 이내 발급신청시는 기존 토큰값과 동일, 발급시 알림톡 발송)
     def read_token(self):
-        # self.account 객체에 'token'이라는 속성(데이터)이 실제로 있는지 확인
-        if hasattr(self.account, 'token'):
-            token = self.account.token
-            # 만료 여부 체크 (is_expired_custom 로직 사용)
-            if not token.is_expired_custom:
-                return token.access_token
+        # 만료 여부 체크 (is_token_expired 로직 사용)
+        if not self.account.is_token_expired:
+            return self.account.access_token
 
         return None
 
@@ -116,17 +109,13 @@ class KisAuth:
         cfg = dict()
         cfg["my_app"] = self.account.app_key
         cfg["my_sec"] = self.account.secret_key
-        cfg["my_acct"] = self.account.account_number[8:]
+        cfg["my_acct"] = self.account.account_number[:8]
         cfg["my_prod"] = self.account.account_number[-2:]
         cfg["my_htsid"] = self.account.hts_id
         cfg["my_url"] = settings.KIS_URL
         cfg["my_url_ws"] = settings.KIS_WS_URL
 
-        try:
-            my_token = self._TRENV.my_token
-        except AttributeError:
-            my_token = ""
-        cfg["my_token"] = my_token if token_key else token_key
+        cfg["my_token"] = token_key
 
         self._setTRENV(cfg)
 
@@ -148,7 +137,7 @@ class KisAuth:
 
         if saved_token is None:
             url = f"{settings.KIS_URL}/oauth2/tokenP"
-            res = requests.post(url, data=json.dumps(p), headers=self._getBaseHeader())
+            res = requests.post(url, data=json.dumps(p), headers=self._base_headers)
             if res.status_code == 200:  # 토큰 정상 발급
                 res_obj = self._getResultObject(res.json())
                 my_token = res_obj.access_token
@@ -168,7 +157,7 @@ class KisAuth:
 
     # end of initialize, 토큰 재발급, 토큰 발급시 유효시간 1일
     def reAuth(self):
-        if not self.account.token.is_expired_custom:
+        if self.read_token() is None:
             self.auth()
 
     def smart_sleep(self):
@@ -397,7 +386,7 @@ class KISWebSocket(KisAuth):
         }
 
         url = f"{settings.KIS_URL}/oauth2/Approval"
-        res = requests.post(url, data=json.dumps(p), headers=self._getBaseHeader())  # 토큰 발급
+        res = requests.post(url, data=json.dumps(p), headers=self._base_headers)  # 토큰 발급
         if res.status_code == 200:  # 토큰 정상 발급
             approval_key = self._getResultObject(res.json()).approval_key
         else:

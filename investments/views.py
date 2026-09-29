@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -59,6 +60,7 @@ class AccountDeleteView(LoginRequiredMixin, DeleteView):
 
 
 # 계좌 삭제 AJAX (Delete)
+@login_required  # 비로그인 접근 차단
 @require_POST  # POST 요청만 허용 (보안)
 def account_delete_ajax(request, pk):
     # 내 계좌인지 확인하고 가져오기 (보안)

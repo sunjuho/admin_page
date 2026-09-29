@@ -33,45 +33,34 @@ class Account(models.Model):
     app_key = models.CharField(max_length=200)
     secret_key = models.CharField(max_length=200)
 
+    # 한투 API 접근 토큰 (계좌당 1개, 발급 전에는 비어 있음)
+    access_token = models.TextField(blank=True, default="", verbose_name="접근 토큰")
+
+    # 한투에서 응답받은 실제 만료 시간 (보통 24시간)
+    token_issued_at = models.DateTimeField(null=True, blank=True, verbose_name="토큰 발급 일시")
+    token_expired_at = models.DateTimeField(null=True, blank=True, verbose_name="토큰 공식 만료 일시")
+
+    # 관리용 필드
+    token_is_use = models.BooleanField(default=True, verbose_name="토큰 사용 여부")
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.owner.username}의 {self.name} ({self.account_number})"
 
-    class Meta:
-        verbose_name = "한투 계좌"
-        verbose_name_plural = "한투 계좌 목록"
-
-
-class Token(models.Model):
-    # 계좌 하나당 하나의 토큰만 관리 (1:1 관계)
-    account = models.OneToOneField(Account, on_delete=models.CASCADE, related_name='token')
-
-    access_token = models.TextField(verbose_name="접근 토큰")
-
-    # 한투에서 응답받은 실제 만료 시간 (보통 24시간)
-    issued_at = models.DateTimeField(auto_now_add=True, verbose_name="발급 일시")
-    expired_at = models.DateTimeField(verbose_name="공식 만료 일시")
-
-    # 관리용 필드
-    is_use = models.BooleanField(default=True, verbose_name="사용 여부")
-
-    def __str__(self):
-        return f"Token for {self.account.name}"
-
     @property
-    def is_expired_custom(self):
+    def is_token_expired(self):
         """
-        23시간이 지났는지 체크하는 로직
+        토큰이 없거나 발급된 지 23시간이 지났는지 체크하는 로직
         True면 새로 발급받아야 함
         """
-        if not self.is_use:
+        if not self.access_token or not self.token_is_use or self.token_issued_at is None:
             return True
 
         # 발급된 지 23시간이 지났는지 확인
-        refresh_limit = self.issued_at + timedelta(hours=23)
+        refresh_limit = self.token_issued_at + timedelta(hours=23)
         return timezone.now() >= refresh_limit
 
     class Meta:
-        verbose_name = "API 토큰"
-        verbose_name_plural = "API 토큰 목록"
+        verbose_name = "한투 계좌"
+        verbose_name_plural = "한투 계좌 목록"
