@@ -14,6 +14,7 @@
         {% for account in accounts %}
             <li id="account-item-{{ account.pk }}">
                 {{ account.account_number }} ({{ account.name }})
+                - 전략: {{ account.get_strategy_display|default:"없음" }}
                 <a href="{% url 'investments:account_update' account.pk %}" class="btn btn-sm btn-info">수정</a>
                 <a href="{% url 'investments:account_delete' account.pk %}" class="btn btn-sm btn-danger">페이지[삭제]</a>
                 <button onclick="deleteAccount('{{ account.pk }}')" class="btn btn-sm btn-danger">ajax[삭제]</button>

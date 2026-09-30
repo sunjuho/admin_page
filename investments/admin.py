@@ -3,7 +3,8 @@ from .models import Account
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
-    list_display = ('name', 'owner', 'account_number', 'get_token_status', 'token_expired_at', 'created_at')
+    list_display = ('name', 'owner', 'account_number', 'strategy', 'get_token_status', 'token_expired_at', 'created_at')
+    list_filter = ('strategy',)
     # 어드민 폼에서 owner 필드 제외
     exclude = ('owner',)
     # 토큰 값은 API 발급 결과로만 채워지므로 읽기 전용 (사용 여부만 수정 가능)

@@ -1,17 +1,25 @@
 import os
 import sqlite3
 import sys
+from io import StringIO
 from pathlib import Path
+from unittest import mock
 
 import django
+import pandas as pd
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.test import TestCase
 from django.utils import timezone
+from django_q.models import Schedule
 
 from investments.models import Account
 from investments.services.kis_overseas_stock import KisOverseasStockClient
+from investments.services.tasks import run_all_strategies, run_account_strategy
+from investments.strategies import get_strategy_choices, load_strategies
 
 User = get_user_model()
 
@@ -182,6 +190,74 @@ class KisRealDatabaseIntegrationTest(TestCase):
             self.assertIsNot(clients[0].ka, clients[1].ka)
             self.assertNotEqual(clients[0].account.account_number, clients[1].account.account_number)
             print("\n[SUCCESS] 다중 계좌 클라이언트가 서로 간섭 없이 독립적으로 연결 및 조회되었습니다.")
+
+
+class StrategyBatchTest(TestCase):
+    """
+    투자 전략 레지스트리/배치 단위 테스트 (한투 API는 mock 처리 → 실제 호출 없음)
+    실행: python manage.py test investments.tests.StrategyBatchTest
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create_user(username='tester', email='tester@example.com')
+        cls.acc_with_strategy = Account.objects.create(
+            owner=cls.user, name='전략계좌', account_number='1234567801',
+            hts_id='hts', app_key='k', secret_key='s', strategy='balance_check',
+        )
+        cls.acc_without_strategy = Account.objects.create(
+            owner=cls.user, name='일반계좌', account_number='1234567802',
+            hts_id='hts', app_key='k', secret_key='s',
+        )
+
+    def test_registry_loads_md_and_skips_template(self):
+        strategies = load_strategies()
+        self.assertIn('balance_check', strategies)
+        self.assertNotIn('_template', strategies)
+        self.assertEqual(strategies['balance_check'].name, '잔고 조회 (예시)')
+        self.assertIn(('balance_check', '잔고 조회 (예시)'), get_strategy_choices())
+
+    def test_model_rejects_unknown_strategy(self):
+        self.acc_with_strategy.strategy = 'not_exists'
+        with self.assertRaises(ValidationError):
+            self.acc_with_strategy.full_clean()
+
+    @mock.patch('investments.services.tasks.async_task')
+    def test_run_all_strategies_enqueues_only_accounts_with_strategy(self, mock_async):
+        result = run_all_strategies()
+
+        mock_async.assert_called_once()
+        self.assertEqual(mock_async.call_args.args[1], self.acc_with_strategy.id)
+        self.assertEqual(result, '1개 계좌 전략 작업 등록')
+
+    @mock.patch('investments.services.kis_overseas_stock.KisOverseasStockClient')
+    def test_run_account_strategy_calls_strategy(self, mock_client_cls):
+        mock_client_cls.return_value.inquire_balance.return_value = (
+            pd.DataFrame([{'ovrs_pdno': 'AAPL'}, {'ovrs_pdno': 'TSLA'}]), pd.DataFrame(),
+        )
+
+        result = run_account_strategy(self.acc_with_strategy.id)
+
+        mock_client_cls.assert_called_once()
+        self.assertEqual(result, '[잔고 조회 (예시)] 전략계좌: 보유 종목 2개')
+
+    @mock.patch('investments.services.kis_overseas_stock.KisOverseasStockClient')
+    def test_run_account_strategy_skips_unknown_strategy(self, mock_client_cls):
+        Account.objects.filter(id=self.acc_with_strategy.id).update(strategy='deleted_strategy')
+
+        result = run_account_strategy(self.acc_with_strategy.id)
+
+        mock_client_cls.assert_not_called()  # 전략이 없으면 API 호출도 하지 않음
+        self.assertIn('건너뜀', result)
+
+    def test_setup_schedule_command_is_idempotent(self):
+        call_command('setup_strategy_schedule', '--time', '22:40', stdout=StringIO())
+        call_command('setup_strategy_schedule', '--time', '23:10', stdout=StringIO())
+
+        schedules = Schedule.objects.filter(func='investments.services.tasks.run_all_strategies')
+        self.assertEqual(schedules.count(), 1)
+        next_run = timezone.localtime(schedules.first().next_run)
+        self.assertEqual((next_run.hour, next_run.minute), (23, 10))
 
 
 if __name__ == '__main__':

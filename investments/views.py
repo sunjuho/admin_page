@@ -12,7 +12,7 @@ from .models import Account
 # 계좌 등록 뷰 (Create)
 class AccountCreateView(LoginRequiredMixin, CreateView):
     model = Account
-    fields = ['name', 'account_number', 'hts_id', 'app_key', 'secret_key']  # 사용자에게 입력받을 필드
+    fields = ['name', 'account_number', 'hts_id', 'app_key', 'secret_key', 'strategy']  # 사용자에게 입력받을 필드
     template_name = 'investments/account_form.html'  # 사용할 HTML 파일
     # 등록 성공 시 이동할 URL 패턴 이름
     success_url = reverse_lazy('investments:account_list')
@@ -39,7 +39,7 @@ class AccountListView(LoginRequiredMixin, ListView):
 class AccountUpdateView(LoginRequiredMixin, UpdateView):
     model = Account
     # 수정 가능한 필드 지정 (보통 계좌번호는 수정을 막기도 하지만, 일단 포함합니다)
-    fields = ['name', 'account_number', 'hts_id', 'app_key', 'secret_key']
+    fields = ['name', 'account_number', 'hts_id', 'app_key', 'secret_key', 'strategy']
     template_name = 'investments/account_form.html'  # CreateView와 같은 템플릿 재사용 가능!
     success_url = reverse_lazy('investments:account_list')
 
