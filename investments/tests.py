@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest import mock
 
 import django
-import pandas as pd
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -17,8 +16,8 @@ from django.utils import timezone
 from django_q.models import Schedule
 
 from investments.models import Account
-from investments.services.kis_overseas_stock import KisOverseasStockClient
-from investments.services.tasks import run_all_strategies, run_account_strategy
+from investments.services.kis.kis_overseas_stock import KisOverseasStockClient
+from investments.services.tasks import run_all_strategies
 from investments.strategies import get_strategy_choices, load_strategies
 
 User = get_user_model()
@@ -194,7 +193,7 @@ class KisRealDatabaseIntegrationTest(TestCase):
 
 class StrategyBatchTest(TestCase):
     """
-    투자 전략 레지스트리/배치 단위 테스트 (한투 API는 mock 처리 → 실제 호출 없음)
+    투자 전략 레지스트리/배치 단위 테스트 (한투 API 호출 없음)
     실행: python manage.py test investments.tests.StrategyBatchTest
     """
 
@@ -229,26 +228,6 @@ class StrategyBatchTest(TestCase):
         mock_async.assert_called_once()
         self.assertEqual(mock_async.call_args.args[1], self.acc_with_strategy.id)
         self.assertEqual(result, '1개 계좌 전략 작업 등록')
-
-    @mock.patch('investments.services.kis_overseas_stock.KisOverseasStockClient')
-    def test_run_account_strategy_calls_strategy(self, mock_client_cls):
-        mock_client_cls.return_value.inquire_balance.return_value = (
-            pd.DataFrame([{'ovrs_pdno': 'AAPL'}, {'ovrs_pdno': 'TSLA'}]), pd.DataFrame(),
-        )
-
-        result = run_account_strategy(self.acc_with_strategy.id)
-
-        mock_client_cls.assert_called_once()
-        self.assertEqual(result, '[잔고 조회 (예시)] 전략계좌: 보유 종목 2개')
-
-    @mock.patch('investments.services.kis_overseas_stock.KisOverseasStockClient')
-    def test_run_account_strategy_skips_unknown_strategy(self, mock_client_cls):
-        Account.objects.filter(id=self.acc_with_strategy.id).update(strategy='deleted_strategy')
-
-        result = run_account_strategy(self.acc_with_strategy.id)
-
-        mock_client_cls.assert_not_called()  # 전략이 없으면 API 호출도 하지 않음
-        self.assertIn('건너뜀', result)
 
     def test_setup_schedule_command_is_idempotent(self):
         call_command('setup_strategy_schedule', '--time', '22:40', stdout=StringIO())

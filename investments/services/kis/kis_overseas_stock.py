@@ -1,15 +1,10 @@
 import logging
-import sys
 from typing import Optional, Tuple
 from investments.models import Account
-from investments.services.kis_auth import KisAuth
+from investments.services.kis.kis_auth import KisAuth
 
 import pandas as pd
 
-sys.path.extend(['..', '.'])
-
-# 로깅 설정
-logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class KisOverseasStockClient:
@@ -4516,7 +4511,7 @@ class KisOverseasStockClient:
                     auth,
                     excd,
                     symb,
-                    "N", dataframe1, dataframe2, dataframe3, depth + 1, max_depth
+                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, dataframe3=dataframe3, depth=depth + 1, max_depth=max_depth
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -4766,7 +4761,7 @@ class KisOverseasStockClient:
                     fid_input_date_2,
                     fid_period_div_code,
                     env_dv,
-                    "N", dataframe1, dataframe2, depth + 1, max_depth
+                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -4991,7 +4986,7 @@ class KisOverseasStockClient:
                     co_st_per,
                     co_en_per,
                     keyb,
-                    "N", dataframe1, dataframe2, depth + 1, max_depth
+                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5130,7 +5125,7 @@ class KisOverseasStockClient:
                     fid_input_iscd,
                     fid_hour_cls_code,
                     fid_pw_data_incu_yn,
-                    "N", dataframe1, dataframe2, depth + 1, max_depth
+                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5289,7 +5284,7 @@ class KisOverseasStockClient:
                     nrec,
                     fill,
                     keyb,
-                    "N", dataframe1, dataframe2, depth + 1, max_depth
+                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
                 )
             else:
                 logger.info("Data fetch complete.")

@@ -30,7 +30,7 @@ def run_all_strategies():
 def run_account_strategy(account_id):
     """계좌 하나의 전략 실행"""
     # 한투 API 클라이언트는 무거우므로 실제 실행 시점에만 import
-    from investments.services.kis_overseas_stock import KisOverseasStockClient
+    from investments.services.kis.kis_overseas_stock import KisOverseasStockClient
 
     account = Account.objects.get(id=account_id)
 

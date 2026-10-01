@@ -16,7 +16,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'adminPage.settings.local')
 django.setup()
 
 from investments.models import Account
-from investments.services.kis_overseas_stock import KisOverseasStockClient
+from investments.services.kis.kis_overseas_stock import KisOverseasStockClient
 from investments.strategies import get_strategy
 
 STRATEGY_KEY = 'balance_check'
