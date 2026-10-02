@@ -35,13 +35,13 @@ class Account(models.Model):
     app_key = models.CharField(max_length=200)
     secret_key = models.CharField(max_length=200)
 
-    # 투자 전략 (investments/strategies/<key>.md 의 key, 비어 있으면 배치 대상 제외)
+    # 매매 전략 (investments/strategies/<key>.md 의 key, 비어 있으면 배치 대상 제외)
     # 선택지는 md 파일에서 동적으로 읽어오므로 전략을 추가해도 마이그레이션 불필요
     strategy = models.CharField(max_length=50,
                                 blank=True,
                                 default="",
                                 choices=get_strategy_choices,
-                                verbose_name="투자 전략")
+                                verbose_name="매매 전략")
 
     # 한투 API 접근 토큰 (계좌당 1개, 발급 전에는 비어 있음)
     access_token = models.TextField(blank=True, default="", verbose_name="접근 토큰")

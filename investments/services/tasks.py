@@ -1,4 +1,4 @@
-# 투자 전략 배치 (django-q2)
+# 매매 전략 배치 (django-q2)
 # 흐름: 스케줄 → run_all_strategies → 계좌마다 run_account_strategy 작업을 큐에 등록 → 워커가 병렬 실행
 import logging
 

@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 개요
 
-한국투자증권(KIS) Open API로 여러 해외주식 계좌를 관리하고, 계좌마다 자동 투자 전략을 배치로 돌리는 Django 6 관리자 사이트. 프론트엔드는 AdminLTE 3.2(`static/`에 포함)이며, Google 로그인(allauth)을 사용합니다. 코드 주석과 UI 문구는 한국어입니다.
+한국투자증권(KIS) Open API로 여러 해외주식 계좌를 관리하고, 계좌마다 자동 매매 전략을 배치로 돌리는 Django 6 관리자 사이트. 프론트엔드는 AdminLTE 3.2(`static/`에 포함)이며, Google 로그인(allauth)을 사용합니다. 코드 주석과 UI 문구는 한국어입니다.
+
+## 사용자
+
+- 나와 가족이 함께 쓰는 사이트입니다. 로그인은 `AllowedEmail`에 등록된 가족 이메일만 가능합니다.
+- **관리자는 나 혼자**입니다(슈퍼유저). Django admin(`/admin/`)에서 배치 운영과 데이터 관리를 하고, FE 화면도 함께 씁니다.
+- **가족은 FE 화면만** 씁니다. FE 화면은 `templates/`의 AdminLTE 템플릿으로 만든 사용자 화면이며, 가족은 여기서 자기 계좌를 등록·수정·삭제하고 조회합니다. Django admin에는 접근하지 않습니다.
+- FE 화면의 모든 조회와 수정은 `owner=request.user`로 걸러서, 본인 계좌와 그 계좌의 데이터만 보이게 합니다. 새 FE 화면을 만들 때도 같은 규칙을 지킵니다.
+- 같은 매매 전략을 여러 사람의 계좌에서 동시에 실행할 수 있어야 합니다. 매매 전략은 코드에 한 번 정의하고 계좌는 키(`Account.strategy`)로만 참조하므로, 실행 기록과 상태는 계좌마다 따로 관리합니다.
 
 ## 명령어
 
@@ -45,4 +53,4 @@ python manage.py test investments.tests.StrategyBatchTest.test_run_all_strategie
 ### `investments` 앱 — KIS 계좌, API, 전략 배치
 - **`Account` 모델**은 계좌 정보와 KIS 접근 토큰(`access_token`, `token_issued_at`, `token_expired_at`, `token_is_use`)을 함께 저장합니다(예전 Token 테이블은 0006에서 병합됨). `is_token_expired`는 발급 후 23시간이 지나면 True를 반환합니다. 뷰는 모두 `owner=request.user`로 필터링합니다.
 - **KIS 클라이언트**: `KisOverseasStockClient(account)`는 생성할 때 `KisAuth(account).auth()`를 호출해 토큰을 재사용하거나 새로 발급하고, 새 토큰은 `Account`에 저장합니다. 메서드(`inquire_balance`, `order` 등)는 대부분 pandas DataFrame을 반환합니다. KIS 관련 코드는 `services/kis/`에 모여 있습니다. `services/kis/kis_original/`은 KIS 공식 샘플 원본(해외·국내 주식)으로 참고용이며, 여기서 가져와 계좌 단위 클래스로 바꾼 것이 `services/kis/kis_auth.py`와 `services/kis/kis_overseas_stock.py`입니다.- **전략 플러그인** (`investments/strategies/`): 전략 하나는 `<key>.md`(front matter에 `name`/`description`/`enabled`)와 `<key>.py`(`BaseStrategy`를 상속한 `Strategy` 클래스와 `run(account, client)` 구현)로 이루어집니다. `load_strategies()`가 md 파일을 스캔하고(`_`로 시작하는 파일 제외, `lru_cache`로 프로세스당 한 번), `Account.strategy`의 `choices=get_strategy_choices`가 이를 동적으로 참조하므로 **전략을 추가해도 마이그레이션이 필요 없습니다.** 새 전략은 `_template.md`를 복사해 시작합니다. 캐시 때문에 md를 수정하면 runserver와 qcluster를 재시작해야 반영됩니다.
-- **배치 흐름**: django-q `Schedule`("투자 전략 배치") → `services/tasks.run_all_strategies`가 `strategy`가 비어 있지 않은 계좌마다 `run_account_strategy`를 `async_task`로 큐에 넣음 → 워커가 전략을 찾아 `strategy.run(account, KisOverseasStockClient(account))`를 실행. 계좌마다 작업이 분리되어 있어 한 계좌가 실패해도 나머지는 계속 실행되고, 반환된 문자열은 작업 결과로 DB에 저장됩니다. 전략이 사라졌거나 비활성화된 경우에는 경고만 남기고 건너뜁니다.
+- **배치 흐름**: django-q `Schedule`("매매 전략 배치") → `services/tasks.run_all_strategies`가 `strategy`가 비어 있지 않은 계좌마다 `run_account_strategy`를 `async_task`로 큐에 넣음 → 워커가 전략을 찾아 `strategy.run(account, KisOverseasStockClient(account))`를 실행. 계좌마다 작업이 분리되어 있어 한 계좌가 실패해도 나머지는 계속 실행되고, 반환된 문자열은 작업 결과로 DB에 저장됩니다. 전략이 사라졌거나 비활성화된 경우에는 경고만 남기고 건너뜁니다.

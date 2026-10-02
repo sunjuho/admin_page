@@ -1,4 +1,4 @@
-# 투자 전략 배치 스케줄 등록/수정
+# 매매 전략 배치 스케줄 등록/수정
 # 사용법: python manage.py setup_strategy_schedule --time 22:40
 from datetime import datetime, time, timedelta
 
@@ -6,11 +6,11 @@ from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
 from django_q.models import Schedule
 
-SCHEDULE_NAME = "투자 전략 배치"
+SCHEDULE_NAME = "매매 전략 배치"
 
 
 class Command(BaseCommand):
-    help = "전략이 선택된 계좌들을 매일 지정 시각에 실행하는 django-q 스케줄을 등록합니다."
+    help = "매매 전략이 선택된 계좌들을 매일 지정 시각에 실행하는 django-q 스케줄을 등록합니다."
 
     def add_arguments(self, parser):
         parser.add_argument("--time", default="22:40",

@@ -193,7 +193,7 @@ class KisRealDatabaseIntegrationTest(TestCase):
 
 class StrategyBatchTest(TestCase):
     """
-    투자 전략 레지스트리/배치 단위 테스트 (한투 API 호출 없음)
+    매매 전략 레지스트리/배치 단위 테스트 (한투 API 호출 없음)
     실행: python manage.py test investments.tests.StrategyBatchTest
     """
 
@@ -237,6 +237,20 @@ class StrategyBatchTest(TestCase):
         self.assertEqual(schedules.count(), 1)
         next_run = timezone.localtime(schedules.first().next_run)
         self.assertEqual((next_run.hour, next_run.minute), (23, 10))
+
+    def test_setup_schedule_command_renames_legacy_schedule(self):
+        # 예전 이름('투자 전략 배치')으로 등록된 스케줄은 새로 만들지 않고 이름만 바꿔서 이어 씀
+        Schedule.objects.create(
+            name='투자 전략 배치',
+            func='investments.services.tasks.run_all_strategies',
+            schedule_type=Schedule.DAILY,
+        )
+
+        call_command('setup_strategy_schedule', '--time', '22:40', stdout=StringIO())
+
+        schedules = Schedule.objects.filter(func='investments.services.tasks.run_all_strategies')
+        self.assertEqual(schedules.count(), 1)
+        self.assertEqual(schedules.first().name, '매매 전략 배치')
 
 
 if __name__ == '__main__':

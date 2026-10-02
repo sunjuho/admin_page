@@ -3,7 +3,7 @@ import logging
 
 class BaseStrategy:
     """
-    모든 투자 전략의 부모 클래스
+    모든 매매 전략의 부모 클래스
     각 전략 파일(<key>.py)에서 이 클래스를 상속한 Strategy 클래스를 만들고 run()을 구현
     """
 
