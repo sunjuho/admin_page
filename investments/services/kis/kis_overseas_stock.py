@@ -20,8 +20,6 @@ class KisOverseasStockClient:
 
     def algo_ordno(
             self,
-            cano: str,  # [필수] 종합계좌번호
-            acnt_prdt_cd: str,  # [필수] 계좌상품코드 (ex. 01)
             trad_dt: str,  # [필수] 거래일자
             FK200: str = "",  # 연속조회검색조건200
             NK200: str = "",  # 연속조회키200
@@ -34,8 +32,6 @@ class KisOverseasStockClient:
         TWAP, VWAP 주문에 대한 주문번호를 조회하는 API
 
         Args:
-            cano (str): [필수] 종합계좌번호
-            acnt_prdt_cd (str): [필수] 계좌상품코드 (ex. 01)
             trad_dt (str): [필수] 거래일자
             FK200 (str): 연속조회검색조건200
             NK200 (str): 연속조회키200
@@ -48,15 +44,11 @@ class KisOverseasStockClient:
             pd.DataFrame: 해외주식 지정가주문번호 데이터
 
         Example:
-            >>> df = algo_ordno(cano=trenv.my_acct, acnt_prdt_cd=trenv.my_prod, trad_dt="20250619")
+            >>> df = algo_ordno(trad_dt="20250619")
             >>> print(df)
         """
 
-        if cano == "":
-            raise ValueError("cano is required")
 
-        if acnt_prdt_cd == "":
-            raise ValueError("acnt_prdt_cd is required (e.g. '01')")
 
         if trad_dt == "":
             raise ValueError("trad_dt is required")
@@ -73,8 +65,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/algo-ordno"
 
         params = {
-            "CANO": cano,  # 종합계좌번호
-            "ACNT_PRDT_CD": acnt_prdt_cd,  # 계좌상품코드
+            "CANO": self.account.account_number[:8],  # 종합계좌번호
+            "ACNT_PRDT_CD": self.account.account_number[-2:],  # 계좌상품코드
             "TRAD_DT": trad_dt,  # 거래일자
             "CTX_AREA_FK200": FK200,  # 연속조회검색조건200
             "CTX_AREA_NK200": NK200  # 연속조회키200
@@ -98,7 +90,13 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.algo_ordno(
-                    cano, acnt_prdt_cd, trad_dt, FK200, NK200, "N", dataframe, depth + 1, max_depth
+                    trad_dt=trad_dt,
+                    FK200=FK200,
+                    NK200=NK200,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -115,8 +113,6 @@ class KisOverseasStockClient:
     def daytime_order(
             self,
             order_dv: str,  # 주문구분 buy(매수) / sell(매도)
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             pdno: str,  # 상품번호
             ord_qty: str,  # 주문수량
@@ -134,8 +130,6 @@ class KisOverseasStockClient:
 
         Args:
             order_dv (str): 주문구분 buy(매수) / sell(매도)
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD:나스닥 / NYSE:뉴욕 / AMEX:아멕스
             pdno (str): 종목코드
             ord_qty (str): 해외거래소 별 최소 주문수량 및 주문단위 확인 필요
@@ -151,8 +145,6 @@ class KisOverseasStockClient:
         Example:
             >>> df = daytime_order(
             ...     order_dv="buy",
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     pdno="AAPL",
             ...     ord_qty="10",
@@ -165,12 +157,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NASD')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NASD')")
@@ -201,8 +187,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/daytime-order"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "PDNO": pdno,
             "ORD_QTY": ord_qty,
@@ -242,8 +228,6 @@ class KisOverseasStockClient:
 
     def daytime_order_rvsecncl(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             pdno: str,  # 상품번호
             orgn_odno: str,  # 원주문번호
@@ -261,8 +245,6 @@ class KisOverseasStockClient:
         해외주식 미국주간정정취소 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD:나스닥 / NYSE:뉴욕 / AMEX:아멕스
             pdno (str): 종목코드
             orgn_odno (str): 정정 또는 취소할 원주문번호
@@ -278,8 +260,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = daytime_order_rvsecncl(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     pdno="AAPL",
             ...     orgn_odno="1234567890",
@@ -293,12 +273,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NASD')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NASD')")
@@ -326,8 +300,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/daytime-order-rvsecncl"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "PDNO": pdno,
             "ORGN_ODNO": orgn_odno,
@@ -369,8 +343,6 @@ class KisOverseasStockClient:
 
     def foreign_margin(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             tr_cont: str = "",  # 연속 거래 여부
             dataframe: Optional[pd.DataFrame] = None,  # 누적 데이터프레임
             depth: int = 0,  # 현재 재귀 깊이
@@ -382,8 +354,6 @@ class KisOverseasStockClient:
         해외증거금 통화별조회 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 종합계좌번호 (필수)
-            acnt_prdt_cd (str): 계좌상품코드 (필수)
             tr_cont (str): 연속 거래 여부 (기본값: "")
             dataframe (Optional[pd.DataFrame]): 누적 데이터프레임
             depth (int): 현재 재귀 깊이
@@ -397,13 +367,7 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # 필수 파라미터 검증
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
 
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
 
         # 최대 재귀 깊이 체크
         if depth >= max_depth:
@@ -415,8 +379,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/foreign-margin"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
         }
 
         # API 호출
@@ -442,9 +406,10 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.foreign_margin(
-                    cano,
-                    acnt_prdt_cd,
-                    "N", dataframe, depth + 1, max_depth
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -461,8 +426,6 @@ class KisOverseasStockClient:
 
     def inquire_algo_ccnl(
             self,
-            cano: str,  # [필수] 계좌번호
-            acnt_prdt_cd: str,  # [필수] 계좌상품코드 (ex. 01)
             ord_dt: str = "",  # 주문일자
             ord_gno_brno: str = "",  # 주문채번지점번호
             odno: str = "",  # 주문번호 (ex. 지정가주문번호 TTTC6058R에서 조회된 주문번호 입력)
@@ -479,8 +442,6 @@ class KisOverseasStockClient:
         해외주식 TWAP, VWAP 주문에 대한 체결내역 조회 API로 지정가 주문번호조회 API를 수행 후 조회해야합니다
 
         Args:
-            cano (str): [필수] 계좌번호
-            acnt_prdt_cd (str): [필수] 계좌상품코드 (ex. 01)
             ord_dt (str): 주문일자
             ord_gno_brno (str): 주문채번지점번호
             odno (str): 주문번호 (ex. 지정가주문번호 TTTC6058R에서 조회된 주문번호 입력)
@@ -497,16 +458,12 @@ class KisOverseasStockClient:
             Tuple[pd.DataFrame, pd.DataFrame]: (output, output3) 체결내역 데이터
 
         Example:
-            >>> result, result3 = inquire_algo_ccnl(cano=trenv.my_acct, acnt_prdt_cd=trenv.my_prod)
+            >>> result, result3 = inquire_algo_ccnl()
             >>> print(result)
             >>> print(result3)
         """
 
-        if cano == "":
-            raise ValueError("cano is required")
 
-        if acnt_prdt_cd == "":
-            raise ValueError("acnt_prdt_cd is required")
 
         if depth > max_depth:
             logging.warning("Max recursive depth reached.")
@@ -521,8 +478,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-algo-ccnl"
 
         params = {
-            "CANO": cano,  # 계좌번호
-            "ACNT_PRDT_CD": acnt_prdt_cd,  # 계좌상품코드
+            "CANO": self.account.account_number[:8],  # 계좌번호
+            "ACNT_PRDT_CD": self.account.account_number[-2:],  # 계좌상품코드
             "ORD_DT": ord_dt,  # 주문일자
             "ORD_GNO_BRNO": ord_gno_brno,  # 주문채번지점번호
             "ODNO": odno,  # 주문번호
@@ -555,8 +512,17 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.inquire_algo_ccnl(
-                    cano, acnt_prdt_cd, ord_dt, ord_gno_brno, odno, ttlz_icld_yn,
-                    NK200, FK200, "N", dataframe, dataframe3, depth + 1, max_depth
+                    ord_dt=ord_dt,
+                    ord_gno_brno=ord_gno_brno,
+                    odno=odno,
+                    ttlz_icld_yn=ttlz_icld_yn,
+                    NK200=NK200,
+                    FK200=FK200,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    dataframe3=dataframe3,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -572,8 +538,6 @@ class KisOverseasStockClient:
 
     def inquire_balance(
             self,
-            # cano: str,  # 종합계좌번호
-            # acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str = "",  # 해외거래소코드
             tr_crcy_cd: str = "",  # 거래통화코드
             FK200: str = "",  # 연속조회검색조건200
@@ -591,8 +555,6 @@ class KisOverseasStockClient:
         해외주식 잔고 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): [모의] NASD : 나스닥 NYSE : 뉴욕  AMEX : 아멕스  [실전] NASD : 미국전체 NAS : 나스닥 NYSE : 뉴욕  AMEX : 아멕스  [모의/실전 공통] SEHK : 홍콩 SHAA : 중국상해 SZAA : 중국심천 TKSE : 일본 HASE : 베트남 하노이 VNSE : 베트남 호치민
             tr_crcy_cd (str): USD : 미국달러 HKD : 홍콩달러 CNY : 중국위안화 JPY : 일본엔화 VND : 베트남동
             FK200 (str): 공란 : 최초 조회시 이전 조회 Output CTX_AREA_FK200값 : 다음페이지 조회시(2번째부터)
@@ -609,8 +571,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df1, df2 = inquire_balance(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     tr_crcy_cd="USD",
             ...     FK200="",
@@ -702,18 +662,16 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_balance(
-                    # cano,
-                    # acnt_prdt_cd,
-                    ovrs_excg_cd,
-                    tr_crcy_cd,
-                    FK200,
-                    NK200,
-                    env_dv,
-                    dataframe1,
-                    dataframe2,
-                    "N",
-                    depth + 1,
-                    max_depth
+                    ovrs_excg_cd=ovrs_excg_cd,
+                    tr_crcy_cd=tr_crcy_cd,
+                    FK200=FK200,
+                    NK200=NK200,
+                    env_dv=env_dv,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -730,8 +688,6 @@ class KisOverseasStockClient:
 
     def inquire_ccnl(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             pdno: str,  # 상품번호
             ord_strt_dt: str,  # 주문시작일자
             ord_end_dt: str,  # 주문종료일자
@@ -756,8 +712,6 @@ class KisOverseasStockClient:
         해외주식 주문체결내역 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             pdno (str): 전종목일 경우 "%" 입력 ※ 모의투자계좌의 경우 ""(전체 조회)만 가능
             ord_strt_dt (str): YYYYMMDD 형식 (현지시각 기준)
             ord_end_dt (str): YYYYMMDD 형식 (현지시각 기준)
@@ -781,8 +735,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = inquire_ccnl(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     pdno="%",
             ...     ord_strt_dt="20211027",
             ...     ord_end_dt="20211027",
@@ -799,12 +751,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '810XXXXX')")
-            raise ValueError("cano is required. (e.g. '810XXXXX')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ord_strt_dt:
             logger.error("ord_strt_dt is required. (e.g. '20211027')")
             raise ValueError("ord_strt_dt is required. (e.g. '20211027')")
@@ -837,8 +783,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-ccnl"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "PDNO": pdno,
             "ORD_STRT_DT": ord_strt_dt,
             "ORD_END_DT": ord_end_dt,
@@ -875,25 +821,23 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_ccnl(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     pdno=pdno,
                     ord_strt_dt=ord_strt_dt,
                     ord_end_dt=ord_end_dt,
                     sll_buy_dvsn=sll_buy_dvsn,
                     ccld_nccs_dvsn=ccld_nccs_dvsn,
-                    ovrs_excg_cd=ovrs_excg_cd,
                     sort_sqn=sort_sqn,
                     ord_dt=ord_dt,
                     ord_gno_brno=ord_gno_brno,
                     odno=odno,
+                    ovrs_excg_cd=ovrs_excg_cd,
                     NK200=NK200,
                     FK200=FK200,
                     env_dv=env_dv,
-                    tr_cont="N",
+                    tr_cont='N',
                     dataframe=dataframe,
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -910,8 +854,6 @@ class KisOverseasStockClient:
 
     def inquire_nccs(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             sort_sqn: str,  # 정렬순서
             FK200: str,  # 연속조회검색조건200
@@ -928,8 +870,6 @@ class KisOverseasStockClient:
         해외주식 미체결내역 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD : 나스닥 NYSE : 뉴욕  AMEX : 아멕스 SEHK : 홍콩 SHAA : 중국상해 SZAA : 중국심천 TKSE : 일본 HASE : 베트남 하노이 VNSE : 베트남 호치민  * NASD 인 경우만 미국전체로 조회되며 나머지 거래소 코드는 해당 거래소만 조회됨 * 공백 입력 시 다음조회가 불가능하므로, 반드시 거래소코드 입력해야 함
             sort_sqn (str): DS : 정순 그외 : 역순  [header tr_id: TTTS3018R] ""(공란)
             FK200 (str): 공란 : 최초 조회시 이전 조회 Output CTX_AREA_FK200값 : 다음페이지 조회시(2번째부터)
@@ -945,8 +885,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = inquire_nccs(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NYSE",
             ...     sort_sqn="DS",
             ...     FK200="",
@@ -955,12 +893,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '810XXXXX')")
-            raise ValueError("cano is required. (e.g. '810XXXXX')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NYSE')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NYSE')")
@@ -978,8 +910,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-nccs"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "SORT_SQN": sort_sqn,
             "CTX_AREA_FK200": FK200,
@@ -1008,17 +940,15 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_nccs(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     ovrs_excg_cd=ovrs_excg_cd,
                     sort_sqn=sort_sqn,
                     FK200=FK200,
                     NK200=NK200,
                     env_dv=env_dv,
-                    tr_cont="N",
+                    tr_cont='N',
                     dataframe=dataframe,
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -1040,8 +970,6 @@ class KisOverseasStockClient:
 
     def inquire_paymt_stdr_balance(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             bass_dt: str,  # 기준일자
             wcrc_frcr_dvsn_cd: str,  # 원화외화구분코드
             inqr_dvsn_cd: str,  # 조회구분코드
@@ -1058,8 +986,6 @@ class KisOverseasStockClient:
         해외주식 결제기준잔고 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 종합계좌번호
-            acnt_prdt_cd (str): 계좌상품코드
             bass_dt (str): 기준일자
             wcrc_frcr_dvsn_cd (str): 원화외화구분코드 (01: 원화기준, 02: 외화기준)
             inqr_dvsn_cd (str): 조회구분코드 (00: 전체, 01: 일반, 02: 미니스탁)
@@ -1075,8 +1001,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df1, df2, df3 = inquire_paymt_stdr_balance(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     bass_dt="20230630",
             ...     wcrc_frcr_dvsn_cd="01",
             ...     inqr_dvsn_cd="00"
@@ -1085,12 +1009,6 @@ class KisOverseasStockClient:
             >>> print(df2)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not bass_dt:
             logger.error("bass_dt is required. (e.g. '20230630')")
             raise ValueError("bass_dt is required. (e.g. '20230630')")
@@ -1111,8 +1029,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-paymt-stdr-balance"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "BASS_DT": bass_dt,
             "WCRC_FRCR_DVSN_CD": wcrc_frcr_dvsn_cd,
             "INQR_DVSN_CD": inqr_dvsn_cd,
@@ -1190,17 +1108,15 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_paymt_stdr_balance(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     bass_dt=bass_dt,
                     wcrc_frcr_dvsn_cd=wcrc_frcr_dvsn_cd,
                     inqr_dvsn_cd=inqr_dvsn_cd,
                     dataframe1=dataframe1,
                     dataframe2=dataframe2,
                     dataframe3=dataframe3,
-                    tr_cont="N",
+                    tr_cont='N',
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -1222,8 +1138,6 @@ class KisOverseasStockClient:
 
     def inquire_period_profit(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             natn_cd: str,  # 국가코드
             crcy_cd: str,  # 통화코드
@@ -1245,8 +1159,6 @@ class KisOverseasStockClient:
         해외주식 기간손익 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): 공란 : 전체,  NASD : 미국, SEHK : 홍콩, SHAA : 중국, TKSE : 일본, HASE : 베트남
             natn_cd (str): 공란(Default)
             crcy_cd (str): 공란 : 전체 USD : 미국달러, HKD : 홍콩달러, CNY : 중국위안화,  JPY : 일본엔화, VND : 베트남동
@@ -1267,8 +1179,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df1, df2 = inquire_period_profit(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     natn_cd="",
             ...     crcy_cd="USD",
@@ -1283,12 +1193,6 @@ class KisOverseasStockClient:
             >>> print(df2)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NASD')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NASD')")
@@ -1315,8 +1219,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-period-profit"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "NATN_CD": natn_cd,
             "CRCY_CD": crcy_cd,
@@ -1380,8 +1284,6 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_period_profit(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     ovrs_excg_cd=ovrs_excg_cd,
                     natn_cd=natn_cd,
                     crcy_cd=crcy_cd,
@@ -1393,9 +1295,9 @@ class KisOverseasStockClient:
                     NK200=NK200,
                     dataframe1=dataframe1,
                     dataframe2=dataframe2,
-                    tr_cont="N",
+                    tr_cont='N',
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -1417,8 +1319,6 @@ class KisOverseasStockClient:
 
     def inquire_period_trans(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             erlm_strt_dt: str,  # 등록시작일자
             erlm_end_dt: str,  # 등록종료일자
             ovrs_excg_cd: str,  # 해외거래소코드
@@ -1439,8 +1339,6 @@ class KisOverseasStockClient:
         해외주식 일별거래내역 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 종합계좌번호
-            acnt_prdt_cd (str): 계좌상품코드
             erlm_strt_dt (str): 등록시작일자 (예: 20240420)
             erlm_end_dt (str): 등록종료일자 (예: 20240520)
             ovrs_excg_cd (str): 해외거래소코드
@@ -1460,8 +1358,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df1, df2 = inquire_period_trans(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     erlm_strt_dt="20240420",
             ...     erlm_end_dt="20240520",
             ...     ovrs_excg_cd="NAS",
@@ -1475,12 +1371,6 @@ class KisOverseasStockClient:
             >>> print(df2)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '12345678')")
-            raise ValueError("cano is required. (e.g. '12345678')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not erlm_strt_dt:
             logger.error("erlm_strt_dt is required. (e.g. '20240420')")
             raise ValueError("erlm_strt_dt is required. (e.g. '20240420')")
@@ -1504,8 +1394,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-period-trans"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "ERLM_STRT_DT": erlm_strt_dt,
             "ERLM_END_DT": erlm_end_dt,
             "OVRS_EXCG_CD": ovrs_excg_cd,
@@ -1568,8 +1458,6 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_period_trans(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     erlm_strt_dt=erlm_strt_dt,
                     erlm_end_dt=erlm_end_dt,
                     ovrs_excg_cd=ovrs_excg_cd,
@@ -1580,9 +1468,9 @@ class KisOverseasStockClient:
                     NK100=NK100,
                     dataframe1=dataframe1,
                     dataframe2=dataframe2,
-                    tr_cont="N",
+                    tr_cont='N',
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -1604,8 +1492,6 @@ class KisOverseasStockClient:
 
     def inquire_present_balance(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             wcrc_frcr_dvsn_cd: str,  # 원화외화구분코드
             natn_cd: str,  # 국가코드
             tr_mket_cd: str,  # 거래시장코드
@@ -1624,8 +1510,6 @@ class KisOverseasStockClient:
         해외주식 체결기준현재잔고 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             wcrc_frcr_dvsn_cd (str): 01 : 원화  02 : 외화
             natn_cd (str): 000 전체 840 미국 344 홍콩 156 중국 392 일본 704 베트남
             tr_mket_cd (str): [Request body NATN_CD 000 설정] 00 : 전체  [Request body NATN_CD 840 설정] 00 : 전체 01 : 나스닥(NASD) 02 : 뉴욕거래소(NYSE) 03 : 미국(PINK SHEETS) 04 : 미국(OTCBB) 05 : 아멕스(AMEX)  [Request body NATN_CD 156 설정] 00 : 전체 01 : 상해B 02 : 심천B 03 : 상해A 04 : 심천A  [Request body NATN_CD 392 설정] 01 : 일본  [Request body NATN_CD 704 설정] 01 : 하노이거래 02 : 호치민거래소  [Request body NATN_CD 344 설정] 01 : 홍콩 02 : 홍콩CNY 03 : 홍콩USD
@@ -1643,8 +1527,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df1, df2, df3 = inquire_present_balance(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     wcrc_frcr_dvsn_cd="01",
             ...     natn_cd="000",
             ...     tr_mket_cd="00",
@@ -1655,12 +1537,6 @@ class KisOverseasStockClient:
             >>> print(df3)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '810XXXXX')")
-            raise ValueError("cano is required. (e.g. '810XXXXX')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not wcrc_frcr_dvsn_cd:
             logger.error("wcrc_frcr_dvsn_cd is required. (e.g. '01')")
             raise ValueError("wcrc_frcr_dvsn_cd is required. (e.g. '01')")
@@ -1690,8 +1566,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-present-balance"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "WCRC_FRCR_DVSN_CD": wcrc_frcr_dvsn_cd,
             "NATN_CD": natn_cd,
             "TR_MKET_CD": tr_mket_cd,
@@ -1767,8 +1643,6 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_present_balance(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     wcrc_frcr_dvsn_cd=wcrc_frcr_dvsn_cd,
                     natn_cd=natn_cd,
                     tr_mket_cd=tr_mket_cd,
@@ -1777,9 +1651,9 @@ class KisOverseasStockClient:
                     dataframe1=dataframe1,
                     dataframe2=dataframe2,
                     dataframe3=dataframe3,
-                    tr_cont="N",
+                    tr_cont='N',
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -1801,8 +1675,6 @@ class KisOverseasStockClient:
 
     def inquire_psamount(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             ovrs_ord_unpr: str,  # 해외주문단가
             item_cd: str,  # 종목코드
@@ -1818,8 +1690,6 @@ class KisOverseasStockClient:
         해외주식 매수가능금액조회 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD : 나스닥 / NYSE : 뉴욕 / AMEX : 아멕스 SEHK : 홍콩 / SHAA : 중국상해 / SZAA : 중국심천 TKSE : 일본 / HASE : 하노이거래소 / VNSE : 호치민거래소
             ovrs_ord_unpr (str): 해외주문단가 (23.8) 정수부분 23자리, 소수부분 8자리
             item_cd (str): 종목코드
@@ -1834,8 +1704,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = inquire_psamount(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     ovrs_ord_unpr="1.4",
             ...     item_cd="QQQ"
@@ -1843,12 +1711,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '81019777')")
-            raise ValueError("cano is required. (e.g. '81019777')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NASD')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NASD')")
@@ -1875,8 +1737,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/inquire-psamount"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "OVRS_ORD_UNPR": ovrs_ord_unpr,
             "ITEM_CD": item_cd,
@@ -1904,16 +1766,14 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_psamount(
-                    cano=cano,
-                    acnt_prdt_cd=acnt_prdt_cd,
                     ovrs_excg_cd=ovrs_excg_cd,
                     ovrs_ord_unpr=ovrs_ord_unpr,
                     item_cd=item_cd,
                     env_dv=env_dv,
-                    tr_cont="N",
+                    tr_cont='N',
                     dataframe=dataframe,
                     depth=depth + 1,
-                    max_depth=max_depth
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -2012,7 +1872,15 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.market_cap(
-                    excd, vol_rang, keyb, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    vol_rang=vol_rang,
+                    keyb=keyb,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -2130,7 +1998,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.new_highlow(
-                    excd, mixn, vol_rang, gubn, gubn2, keyb, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    mixn=mixn,
+                    vol_rang=vol_rang,
+                    gubn=gubn,
+                    gubn2=gubn2,
+                    keyb=keyb,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -2146,8 +2025,6 @@ class KisOverseasStockClient:
 
     def order(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             pdno: str,  # 상품번호
             ord_qty: str,  # 주문수량
@@ -2166,8 +2043,6 @@ class KisOverseasStockClient:
         해외주식 주문 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD : 나스닥 NYSE : 뉴욕 AMEX : 아멕스 SEHK : 홍콩 SHAA : 중국상해 SZAA : 중국심천 TKSE : 일본 HASE : 베트남 하노이 VNSE : 베트남 호치민
             pdno (str): 종목코드
             ord_qty (str): 주문수량 (해외거래소 별 최소 주문수량 및 주문단위 확인 필요)
@@ -2184,8 +2059,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = order(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NASD",
             ...     pdno="AAPL",
             ...     ord_qty="1",
@@ -2200,12 +2073,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '810XXXXX')")
-            raise ValueError("cano is required. (e.g. '810XXXXX')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NASD')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NASD')")
@@ -2281,8 +2148,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/order"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "PDNO": pdno,
             "ORD_QTY": ord_qty,
@@ -2326,8 +2193,6 @@ class KisOverseasStockClient:
             self,
             env_dv: str,  # [필수] 실전모의구분 (ex. real:실전, demo:모의)
             ord_dv: str,  # [필수] 매도매수구분 (ex. usBuy:미국매수, usSell:미국매도, asia:아시아)
-            cano: str,  # [필수] 종합계좌번호 (ex. 12345678)
-            acnt_prdt_cd: str,  # [필수] 계좌상품코드 (ex. 01)
             pdno: str,  # [필수] 상품번호
             ovrs_excg_cd: str,
             # [필수] 해외거래소코드 (ex. NASD:나스닥, NYSE:뉴욕, AMEX:아멕스, SEHK:홍콩, SHAA:상해, SZAA:심천, TKSE:일본, HASE:하노이, VNSE:호치민)
@@ -2389,8 +2254,6 @@ class KisOverseasStockClient:
         Args:
             env_dv (str): [필수] 실전모의구분 (ex. real:실전, demo:모의)
             ord_dv (str): [필수] 매도매수구분 (ex. usBuy:미국매수, usSell:미국매도, asia:아시아)
-            cano (str): [필수] 종합계좌번호 (ex. 12345678)
-            acnt_prdt_cd (str): [필수] 계좌상품코드 (ex. 01)
             pdno (str): [필수] 상품번호
             ovrs_excg_cd (str): [필수] 해외거래소코드 (ex. NASD:나스닥, NYSE:뉴욕, AMEX:아멕스, SEHK:홍콩, SHAA:상해, SZAA:심천, TKSE:일본, HASE:하노이, VNSE:호치민)
             ft_ord_qty (str): [필수] FT주문수량
@@ -2408,7 +2271,7 @@ class KisOverseasStockClient:
             pd.DataFrame: 해외주식 예약주문접수 결과 데이터
 
         Example:
-            >>> df = order_resv(env_dv="real", ord_dv="usBuy", cano=trenv.my_acct, acnt_prdt_cd=trenv.my_prod, pdno="TSLA", ovrs_excg_cd="NASD", ft_ord_qty="1", ft_ord_unpr3="900")
+            >>> df = order_resv(env_dv="real", ord_dv="usBuy", pdno="TSLA", ovrs_excg_cd="NASD", ft_ord_qty="1", ft_ord_unpr3="900")
             >>> print(df)
         """
 
@@ -2418,11 +2281,7 @@ class KisOverseasStockClient:
         if ord_dv == "":
             raise ValueError("ord_dv is required (e.g. 'usBuy', 'usSell', 'asia')")
 
-        if cano == "":
-            raise ValueError("cano is required (e.g. '12345678')")
 
-        if acnt_prdt_cd == "":
-            raise ValueError("acnt_prdt_cd is required (e.g. '01')")
 
         if pdno == "":
             raise ValueError("pdno is required")
@@ -2462,8 +2321,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/order-resv"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "PDNO": pdno,
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "FT_ORD_QTY": ft_ord_qty,
@@ -2507,8 +2366,6 @@ class KisOverseasStockClient:
             self,
             env_dv: str,  # [필수] 실전모의구분 (ex. real:실전, demo:모의)
             nat_dv: str,  # [필수] 국가구분 (ex. us:미국)
-            cano: str,  # [필수] 종합계좌번호 (ex. 12345678)
-            acnt_prdt_cd: str,  # [필수] 계좌상품코드 (ex. 01)
             rsvn_ord_rcit_dt: str,  # [필수] 해외주문접수일자
             ovrs_rsvn_odno: str  # [필수] 해외예약주문번호 (ex. 해외주식_예약주문접수 API Output ODNO(주문번호) 참고)
     ) -> pd.DataFrame:
@@ -2525,8 +2382,6 @@ class KisOverseasStockClient:
         Args:
             env_dv (str): [필수] 실전모의구분 (ex. real:실전, demo:모의)
             nat_dv (str): [필수] 국가구분 (ex. us:미국)
-            cano (str): [필수] 종합계좌번호 (ex. 12345678)
-            acnt_prdt_cd (str): [필수] 계좌상품코드 (ex. 01)
             rsvn_ord_rcit_dt (str): [필수] 해외주문접수일자
             ovrs_rsvn_odno (str): [필수] 해외예약주문번호 (ex. 해외주식_예약주문접수 API Output ODNO(주문번호) 참고)
 
@@ -2534,7 +2389,7 @@ class KisOverseasStockClient:
             pd.DataFrame: 해외주식 예약주문접수취소 결과 데이터
 
         Example:
-            >>> df = order_resv_ccnl(env_dv="real", nat_dv="us", cano=trenv.my_acct, acnt_prdt_cd=trenv.my_prod, rsvn_ord_rcit_dt="20220810", ovrs_rsvn_odno="0030008244")
+            >>> df = order_resv_ccnl(env_dv="real", nat_dv="us", rsvn_ord_rcit_dt="20220810", ovrs_rsvn_odno="0030008244")
             >>> print(df)
         """
 
@@ -2544,11 +2399,7 @@ class KisOverseasStockClient:
         if nat_dv == "":
             raise ValueError("nat_dv is required (e.g. 'us')")
 
-        if cano == "":
-            raise ValueError("cano is required (e.g. '12345678')")
 
-        if acnt_prdt_cd == "":
-            raise ValueError("acnt_prdt_cd is required (e.g. '01')")
 
         if rsvn_ord_rcit_dt == "":
             raise ValueError("rsvn_ord_rcit_dt is required")
@@ -2573,8 +2424,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/order-resv-ccnl"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "RSVN_ORD_RCIT_DT": rsvn_ord_rcit_dt,
             "OVRS_RSVN_ODNO": ovrs_rsvn_odno
         }
@@ -2598,8 +2449,6 @@ class KisOverseasStockClient:
     def order_resv_list(
             self,
             nat_dv: str,  # 국가구분코드
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             inqr_strt_dt: str,  # 조회시작일자
             inqr_end_dt: str,  # 조회종료일자
             inqr_dvsn_cd: str,  # 조회구분코드
@@ -2621,8 +2470,6 @@ class KisOverseasStockClient:
 
         Args:
             nat_dv (str): [필수] 국가구분코드 (ex. us:미국, asia:아시아)
-            cano (str): [필수] 종합계좌번호 (ex. 12345678)
-            acnt_prdt_cd (str): [필수] 계좌상품코드 (ex. 01)
             inqr_strt_dt (str): [필수] 조회시작일자 (ex. 20250101)
             inqr_end_dt (str): [필수] 조회종료일자 (ex. 20251231)
             inqr_dvsn_cd (str): [필수] 조회구분코드 (ex. 00:전체, 01:일반해외주식, 02:미니스탁)
@@ -2639,18 +2486,14 @@ class KisOverseasStockClient:
             pd.DataFrame: 해외주식 예약주문조회 데이터
 
         Example:
-            >>> df = order_resv_list(nat_dv="us", cano=trenv.my_acct, acnt_prdt_cd=trenv.my_prod, inqr_strt_dt="20250101", inqr_end_dt="20251231", inqr_dvsn_cd="00", ovrs_excg_cd="NASD")
+            >>> df = order_resv_list(nat_dv="us", inqr_strt_dt="20250101", inqr_end_dt="20251231", inqr_dvsn_cd="00", ovrs_excg_cd="NASD")
             >>> print(df)
         """
 
         if nat_dv == "":
             raise ValueError("nat_dv is required (e.g. 'us' or 'asia')")
 
-        if cano == "":
-            raise ValueError("cano is required (e.g. '12345678')")
 
-        if acnt_prdt_cd == "":
-            raise ValueError("acnt_prdt_cd is required (e.g. '01')")
 
         if inqr_strt_dt == "":
             raise ValueError("inqr_strt_dt is required (e.g. '20250101')")
@@ -2682,8 +2525,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/order-resv-list"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "INQR_STRT_DT": inqr_strt_dt,
             "INQR_END_DT": inqr_end_dt,
             "INQR_DVSN_CD": inqr_dvsn_cd,
@@ -2711,9 +2554,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.order_resv_list(
-                    nat_dv, cano, acnt_prdt_cd, inqr_strt_dt, inqr_end_dt,
-                    inqr_dvsn_cd, ovrs_excg_cd, prdt_type_cd, FK200, NK200,
-                    "N", dataframe, depth + 1, max_depth
+                    nat_dv=nat_dv,
+                    inqr_strt_dt=inqr_strt_dt,
+                    inqr_end_dt=inqr_end_dt,
+                    inqr_dvsn_cd=inqr_dvsn_cd,
+                    ovrs_excg_cd=ovrs_excg_cd,
+                    prdt_type_cd=prdt_type_cd,
+                    FK200=FK200,
+                    NK200=NK200,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -2729,8 +2581,6 @@ class KisOverseasStockClient:
 
     def order_rvsecncl(
             self,
-            cano: str,  # 종합계좌번호
-            acnt_prdt_cd: str,  # 계좌상품코드
             ovrs_excg_cd: str,  # 해외거래소코드
             pdno: str,  # 상품번호
             orgn_odno: str,  # 원주문번호
@@ -2748,8 +2598,6 @@ class KisOverseasStockClient:
         해외주식 정정취소주문 API를 호출하여 DataFrame으로 반환합니다.
 
         Args:
-            cano (str): 계좌번호 체계(8-2)의 앞 8자리
-            acnt_prdt_cd (str): 계좌번호 체계(8-2)의 뒤 2자리
             ovrs_excg_cd (str): NASD : 나스닥  NYSE : 뉴욕  AMEX : 아멕스 SEHK : 홍콩 SHAA : 중국상해 SZAA : 중국심천 TKSE : 일본 HASE : 베트남 하노이 VNSE : 베트남 호치민
             pdno (str): 상품번호
             orgn_odno (str): 정정 또는 취소할 원주문번호 (해외주식_주문 API ouput ODNO  or 해외주식 미체결내역 API output ODNO 참고)
@@ -2765,8 +2613,6 @@ class KisOverseasStockClient:
 
         Example:
             >>> df = order_rvsecncl(
-            ...     cano=trenv.my_acct,
-            ...     acnt_prdt_cd=trenv.my_prod,
             ...     ovrs_excg_cd="NYSE",
             ...     pdno="BA",
             ...     orgn_odno="30135009",
@@ -2780,12 +2626,6 @@ class KisOverseasStockClient:
             >>> print(df)
         """
         # [필수 파라미터 검증]
-        if not cano:
-            logger.error("cano is required. (e.g. '810XXXXX')")
-            raise ValueError("cano is required. (e.g. '810XXXXX')")
-        if not acnt_prdt_cd:
-            logger.error("acnt_prdt_cd is required. (e.g. '01')")
-            raise ValueError("acnt_prdt_cd is required. (e.g. '01')")
         if not ovrs_excg_cd:
             logger.error("ovrs_excg_cd is required. (e.g. 'NYSE')")
             raise ValueError("ovrs_excg_cd is required. (e.g. 'NYSE')")
@@ -2816,8 +2656,8 @@ class KisOverseasStockClient:
         api_url = "/uapi/overseas-stock/v1/trading/order-rvsecncl"
 
         params = {
-            "CANO": cano,
-            "ACNT_PRDT_CD": acnt_prdt_cd,
+            "CANO": self.account.account_number[:8],
+            "ACNT_PRDT_CD": self.account.account_number[-2:],
             "OVRS_EXCG_CD": ovrs_excg_cd,
             "PDNO": pdno,
             "ORGN_ODNO": orgn_odno,
@@ -2951,7 +2791,17 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.price_fluct(
-                    excd, gubn, mixn, vol_rang, keyb, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    gubn=gubn,
+                    mixn=mixn,
+                    vol_rang=vol_rang,
+                    keyb=keyb,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3055,7 +2905,16 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.trade_growth(
-                    excd, nday, vol_rang, auth, keyb, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    vol_rang=vol_rang,
+                    auth=auth,
+                    keyb=keyb,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3168,7 +3027,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.trade_pbmn(
-                    excd, nday, vol_rang, auth, keyb, prc1, prc2, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    vol_rang=vol_rang,
+                    auth=auth,
+                    keyb=keyb,
+                    prc1=prc1,
+                    prc2=prc2,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3277,7 +3147,16 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.trade_turnover(
-                    excd, nday, vol_rang, keyb, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    vol_rang=vol_rang,
+                    keyb=keyb,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3391,7 +3270,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.trade_vol(
-                    excd, nday, vol_rang, keyb, auth, prc1, prc2, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    vol_rang=vol_rang,
+                    keyb=keyb,
+                    auth=auth,
+                    prc1=prc1,
+                    prc2=prc2,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3502,7 +3392,17 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.updown_rate(
-                    excd, nday, gubn, vol_rang, auth, keyb, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    gubn=gubn,
+                    vol_rang=vol_rang,
+                    auth=auth,
+                    keyb=keyb,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3607,7 +3507,16 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.volume_power(
-                    excd, nday, vol_rang, auth, keyb, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    nday=nday,
+                    vol_rang=vol_rang,
+                    auth=auth,
+                    keyb=keyb,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3711,7 +3620,16 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.volume_surge(
-                    excd, mixn, vol_rang, keyb, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    mixn=mixn,
+                    vol_rang=vol_rang,
+                    keyb=keyb,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -3913,9 +3831,23 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.colable_by_company(
-                    pdno, natn_cd, inqr_sqn_dvsn, prdt_type_cd, inqr_strt_dt, inqr_end_dt,
-                    inqr_dvsn, rt_dvsn_cd, rt, loan_psbl_yn, FK100, NK100, "N",
-                    dataframe1, dataframe2, depth + 1, max_depth
+                    pdno=pdno,
+                    natn_cd=natn_cd,
+                    inqr_sqn_dvsn=inqr_sqn_dvsn,
+                    prdt_type_cd=prdt_type_cd,
+                    inqr_strt_dt=inqr_strt_dt,
+                    inqr_end_dt=inqr_end_dt,
+                    inqr_dvsn=inqr_dvsn,
+                    rt_dvsn_cd=rt_dvsn_cd,
+                    rt=rt,
+                    loan_psbl_yn=loan_psbl_yn,
+                    FK100=FK100,
+                    NK100=NK100,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -4011,10 +3943,13 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.countries_holiday(
-                    trad_dt,
-                    NK,
-                    FK,
-                    "N", dataframe, depth + 1, max_depth
+                    trad_dt=trad_dt,
+                    NK=NK,
+                    FK=FK,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -4162,18 +4097,18 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.dailyprice(
-                    auth,
-                    excd,
-                    symb,
-                    gubn,
-                    bymd,
-                    modp,
-                    env_dv,
-                    dataframe1,
-                    dataframe2,
-                    "N",
-                    depth + 1,
-                    max_depth
+                    auth=auth,
+                    excd=excd,
+                    symb=symb,
+                    gubn=gubn,
+                    bymd=bymd,
+                    modp=modp,
+                    env_dv=env_dv,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
 
             else:
@@ -4262,7 +4197,13 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.industry_price(
-                    excd, auth, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    auth=auth,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -4365,7 +4306,16 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.industry_theme(
-                    excd, icod, vol_rang, auth, keyb, "N", dataframe1, dataframe2, depth + 1, max_depth
+                    excd=excd,
+                    icod=icod,
+                    vol_rang=vol_rang,
+                    auth=auth,
+                    keyb=keyb,
+                    tr_cont='N',
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -4508,10 +4458,15 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_asking_price(
-                    auth,
-                    excd,
-                    symb,
-                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, dataframe3=dataframe3, depth=depth + 1, max_depth=max_depth
+                    auth=auth,
+                    excd=excd,
+                    symb=symb,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    dataframe3=dataframe3,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -4605,7 +4560,15 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.quot_inquire_ccnl(
-                    excd, tday, symb, auth, keyb, "N", dataframe, depth + 1, max_depth
+                    excd=excd,
+                    tday=tday,
+                    symb=symb,
+                    auth=auth,
+                    keyb=keyb,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -4755,13 +4718,17 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_daily_chartprice(
-                    fid_cond_mrkt_div_code,
-                    fid_input_iscd,
-                    fid_input_date_1,
-                    fid_input_date_2,
-                    fid_period_div_code,
-                    env_dv,
-                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
+                    fid_cond_mrkt_div_code=fid_cond_mrkt_div_code,
+                    fid_input_iscd=fid_input_iscd,
+                    fid_input_date_1=fid_input_date_1,
+                    fid_input_date_2=fid_input_date_2,
+                    fid_period_div_code=fid_period_div_code,
+                    env_dv=env_dv,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -4959,34 +4926,38 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_search(
-                    auth,
-                    excd,
-                    co_yn_pricecur,
-                    co_st_pricecur,
-                    co_en_pricecur,
-                    co_yn_rate,
-                    co_st_rate,
-                    co_en_rate,
-                    co_yn_valx,
-                    co_st_valx,
-                    co_en_valx,
-                    co_yn_shar,
-                    co_st_shar,
-                    co_en_shar,
-                    co_yn_volume,
-                    co_st_volume,
-                    co_en_volume,
-                    co_yn_amt,
-                    co_st_amt,
-                    co_en_amt,
-                    co_yn_eps,
-                    co_st_eps,
-                    co_en_eps,
-                    co_yn_per,
-                    co_st_per,
-                    co_en_per,
-                    keyb,
-                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
+                    auth=auth,
+                    excd=excd,
+                    co_yn_pricecur=co_yn_pricecur,
+                    co_st_pricecur=co_st_pricecur,
+                    co_en_pricecur=co_en_pricecur,
+                    co_yn_rate=co_yn_rate,
+                    co_st_rate=co_st_rate,
+                    co_en_rate=co_en_rate,
+                    co_yn_valx=co_yn_valx,
+                    co_st_valx=co_st_valx,
+                    co_en_valx=co_en_valx,
+                    co_yn_shar=co_yn_shar,
+                    co_st_shar=co_st_shar,
+                    co_en_shar=co_en_shar,
+                    co_yn_volume=co_yn_volume,
+                    co_st_volume=co_st_volume,
+                    co_en_volume=co_en_volume,
+                    co_yn_amt=co_yn_amt,
+                    co_st_amt=co_st_amt,
+                    co_en_amt=co_en_amt,
+                    co_yn_eps=co_yn_eps,
+                    co_st_eps=co_st_eps,
+                    co_en_eps=co_en_eps,
+                    co_yn_per=co_yn_per,
+                    co_st_per=co_st_per,
+                    co_en_per=co_en_per,
+                    keyb=keyb,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5121,11 +5092,15 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_time_indexchartprice(
-                    fid_cond_mrkt_div_code,
-                    fid_input_iscd,
-                    fid_hour_cls_code,
-                    fid_pw_data_incu_yn,
-                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
+                    fid_cond_mrkt_div_code=fid_cond_mrkt_div_code,
+                    fid_input_iscd=fid_input_iscd,
+                    fid_hour_cls_code=fid_hour_cls_code,
+                    fid_pw_data_incu_yn=fid_pw_data_incu_yn,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5275,16 +5250,20 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.inquire_time_itemchartprice(
-                    auth,
-                    excd,
-                    symb,
-                    nmin,
-                    pinc,
-                    next,
-                    nrec,
-                    fill,
-                    keyb,
-                    tr_cont="N", dataframe1=dataframe1, dataframe2=dataframe2, depth=depth + 1, max_depth=max_depth
+                    auth=auth,
+                    excd=excd,
+                    symb=symb,
+                    nmin=nmin,
+                    pinc=pinc,
+                    next=next,
+                    nrec=nrec,
+                    fill=fill,
+                    keyb=keyb,
+                    dataframe1=dataframe1,
+                    dataframe2=dataframe2,
+                    tr_cont='N',
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5378,8 +5357,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.news_title(
-                    info_gb, class_cd, nation_cd, exchange_cd, symb, data_dt, data_tm, cts, "N", dataframe, depth + 1,
-                    max_depth
+                    info_gb=info_gb,
+                    class_cd=class_cd,
+                    nation_cd=nation_cd,
+                    exchange_cd=exchange_cd,
+                    symb=symb,
+                    data_dt=data_dt,
+                    data_tm=data_tm,
+                    cts=cts,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -5490,8 +5479,18 @@ class KisOverseasStockClient:
                 logging.info("Call Next page...")
                 self.ka.smart_sleep()  # 시스템 안정적 운영을 위한 지연
                 return self.period_rights(
-                    rght_type_cd, inqr_dvsn_cd, inqr_strt_dt, inqr_end_dt,
-                    pdno, prdt_type_cd, NK50, FK50, "N", dataframe, depth + 1, max_depth
+                    rght_type_cd=rght_type_cd,
+                    inqr_dvsn_cd=inqr_dvsn_cd,
+                    inqr_strt_dt=inqr_strt_dt,
+                    inqr_end_dt=inqr_end_dt,
+                    pdno=pdno,
+                    prdt_type_cd=prdt_type_cd,
+                    NK50=NK50,
+                    FK50=FK50,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logging.info("Data fetch complete.")
@@ -5593,11 +5592,14 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.price(
-                    auth,
-                    excd,
-                    symb,
-                    env_dv,
-                    "N", dataframe, depth + 1, max_depth
+                    auth=auth,
+                    excd=excd,
+                    symb=symb,
+                    env_dv=env_dv,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5688,10 +5690,13 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.price_detail(
-                    auth,
-                    excd,
-                    symb,
-                    "N", dataframe, depth + 1, max_depth
+                    auth=auth,
+                    excd=excd,
+                    symb=symb,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
@@ -5842,9 +5847,12 @@ class KisOverseasStockClient:
                 logger.info("Calling next page...")
                 self.ka.smart_sleep()
                 return self.search_info(
-                    prdt_type_cd,
-                    pdno,
-                    "N", dataframe, depth + 1, max_depth
+                    prdt_type_cd=prdt_type_cd,
+                    pdno=pdno,
+                    tr_cont='N',
+                    dataframe=dataframe,
+                    depth=depth + 1,
+                    max_depth=max_depth,
                 )
             else:
                 logger.info("Data fetch complete.")
